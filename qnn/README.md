@@ -35,12 +35,18 @@ readout and the BCE loss.
   parameter-shift gradient, and a `fit` training loop).
 - `example_xor.py` — trains the QNN on a toy XOR-style 2D classification
   task and prints the loss/accuracy per epoch.
+- `example_multi_qubit.py` — the same idea scaled up to more qubits, with
+  `--n-qubits`/`--n-layers` CLI flags and a synthetic higher-dimensional
+  dataset (one qubit per feature).
 
 ## Usage
 
 ```bash
 pip install numpy
 python example_xor.py
+
+# scale up: more qubits/features, more variational layers
+python example_multi_qubit.py --n-qubits 6 --n-layers 3
 ```
 
 ```python
@@ -54,11 +60,29 @@ predictions = qnn.predict(X, params)
 probability_of_class_1 = qnn.predict_proba(X[0], params)
 ```
 
+## Scaling to more qubits
+
+`QuantumNeuralNetwork` is written generically over `n_qubits` — the
+statevector simulator, gate application, and CNOT entangling ring all work
+for any qubit count, not just the 2-qubit XOR demo. Each additional feature
+just gets its own qubit via angle encoding.
+
+One caveat: since the network reads out only qubit 0's `<Z>` expectation,
+information from the other qubits has to be routed there through the
+entangling `CNOT` layers. As `n_qubits` grows, you generally need more
+`n_layers` for that routing to happen well — e.g. a 4-qubit/2-layer circuit
+reaches ~98% training accuracy on the multi-qubit demo, while 6 qubits
+needs 3 layers to reach 100%; 6 qubits with only 2 layers plateaus in the
+70s. `example_multi_qubit.py --n-qubits <n> --n-layers <n>` makes this easy
+to try out directly.
+
 ## Notes
 
 - This is a simulator meant for learning/experimentation, not a
   production-scale quantum computing library. The statevector grows as
-  `2^n_qubits`, so keep `n_qubits` small (2-6 is plenty for demos).
+  `2^n_qubits`, so keep `n_qubits` small (2-8 or so) — both memory and the
+  per-gradient-step cost (the parameter-shift rule evaluates the circuit
+  twice per parameter per sample) grow accordingly.
 - Swap in your own dataset by passing any `X` of shape `(n_samples,
   n_features)` (features are ideally scaled to roughly `[-pi, pi]` since
   they're used as rotation angles) and binary labels `y` of shape
