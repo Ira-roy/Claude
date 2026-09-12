@@ -38,6 +38,10 @@ readout and the BCE loss.
 - `example_multi_qubit.py` — the same idea scaled up to more qubits, with
   `--n-qubits`/`--n-layers` CLI flags and a synthetic higher-dimensional
   dataset (one qubit per feature).
+- `test_quantum_neural_network.py` — unit tests covering gate unitarity,
+  `CNOT` correctness, statevector normalization, expectation-value bounds,
+  and (most importantly) that the parameter-shift gradient matches a
+  numerical finite-difference gradient of the loss.
 
 ## Usage
 
@@ -59,6 +63,21 @@ params = qnn.fit(X, y, epochs=40, lr=0.4)
 predictions = qnn.predict(X, params)
 probability_of_class_1 = qnn.predict_proba(X[0], params)
 ```
+
+## Testing
+
+```bash
+cd qnn && python -m unittest test_quantum_neural_network.py -v
+```
+
+or, from the repo root:
+
+```bash
+python -m unittest discover -s qnn -p "test_*.py" -v
+```
+
+Only the standard library's `unittest` is required (no `pytest`), keeping
+the project dependency-free beyond NumPy.
 
 ## Scaling to more qubits
 
